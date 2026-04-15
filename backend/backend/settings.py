@@ -6,7 +6,7 @@ SECRET_KEY = "django-insecure-4u4!#%u8w2gq1p7qs9u2%cp&*c%^w*2&w$&8nc7sk3rdksg@u-
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -16,10 +16,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "corsheaders",
     "factchecker",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -79,3 +81,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Google Fact Check Tools API Key
+GOOGLE_FACT_CHECK_API_KEY = "YOUR_API_KEY_HERE"
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True

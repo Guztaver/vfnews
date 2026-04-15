@@ -9,4 +9,5 @@ dependencies = [
     "pandas",
     "requests",
     "google-api-python-client",
+    "django-cors-headers>=4.9.0",
 ]

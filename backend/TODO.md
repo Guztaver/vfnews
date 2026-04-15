@@ -1,14 +1,14 @@
 # Project TODO
 
 ## Backend (Python/Django)
-- [ ] Create `factchecker` Django app.
-- [ ] Implement models for storing fact-check history and local dataset.
-- [ ] Integrate Google Fact Check API.
-- [ ] Implement `factcheckexplorer` script for initial dataset generation.
+- [x] Create `factchecker` Django app.
+- [x] Implement models for storing fact-check history and local dataset.
+- [x] Integrate Google Fact Check API.
+- [x] Implement `factcheckexplorer` script for initial dataset generation.
 - [ ] Develop ML model training script (using Naive Bayes/Logistic Regression).
-- [ ] Implement ML model inference in Django views.
-- [ ] Create API endpoints (e.g., `/api/check/`) for the frontend.
-- [ ] Add electoral context keywords for data collection (`eleição`, `bolsonaro`, `lula`, etc.).
+- [x] Implement ML model inference in Django views.
+- [x] Create API endpoints (e.g., `/api/check/`) for the frontend.
+- [x] Add electoral context keywords for data collection (`eleição`, `bolsonaro`, `lula`, etc.).
 
 ## Frontend (Mobile)
 - [ ] Setup project structure (Flutter/React Native).

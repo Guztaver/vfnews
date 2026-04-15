@@ -2,5 +2,5 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Will add endpoints later
+    path('check/', views.CheckClaimView.as_view(), name='check_claim'),
 ]

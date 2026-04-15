@@ -1,4 +1,6 @@
 import requests
+import joblib
+import os
 from django.conf import settings
 
 def check_google_fact_check(claim):
@@ -37,4 +39,25 @@ def check_google_fact_check(claim):
     except Exception as e:
         print(f"Error querying Google Fact Check API: {e}")
 
+    return None
+
+def predict_claim(claim):
+    """
+    Predicts the rating of a claim using the local ML model.
+    """
+    model_path = os.path.join(settings.BASE_DIR, 'factchecker', 'model.joblib')
+    if not os.path.exists(model_path):
+        return None
+
+    try:
+        pipeline = joblib.load(model_path)
+        prediction = pipeline.predict([claim])[0]
+        return {
+            "text": claim,
+            "rating": prediction,
+            "source": "ML"
+        }
+    except Exception as e:
+        print(f"Error during ML inference: {e}")
+    
     return None
