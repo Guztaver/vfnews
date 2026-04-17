@@ -15,7 +15,7 @@ function App() {
             confidence: 1,
             description: "teste",
             title: "teste",
-            verdict: "false",
+            verdict: "true",
           }}
         />
       </Container>

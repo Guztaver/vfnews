@@ -53,18 +53,6 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
         <S.Title>{result.title}</S.Title>
         <S.Description>{result.description}</S.Description>
       </div>
-
-      <S.ConfidenceWrapper>
-        <S.ProgressBar>
-          <S.ProgressFill
-            $width={result.confidence}
-            $verdict={result.verdict}
-          />
-        </S.ProgressBar>
-        <span style={{ fontWeight: "bold", fontSize: "0.875rem" }}>
-          {result.confidence}% de confiança
-        </span>
-      </S.ConfidenceWrapper>
     </S.ResultCard>
   );
 };
