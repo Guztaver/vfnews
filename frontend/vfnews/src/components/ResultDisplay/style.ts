@@ -6,7 +6,7 @@ const slideUp = keyframes`
 `;
 
 export const ResultCard = styled.div<{
-  $verdict: "true" | "false" | "mixed" | "unknown";
+  $verdict: string;
 }>`
   border-radius: 1rem;
   padding: 2rem;
@@ -48,7 +48,7 @@ export const ResultCard = styled.div<{
 `;
 
 export const Badge = styled.div<{
-  $verdict: "true" | "false" | "mixed" | "unknown";
+  $verdict: string;
 }>`
   display: inline-flex;
   align-items: center;

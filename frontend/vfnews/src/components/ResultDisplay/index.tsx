@@ -3,7 +3,7 @@ import { CheckCircle, AlertTriangle, Info, ShieldCheck } from "lucide-react";
 import * as S from "./style";
 
 interface AnalysisResult {
-  verdict: "true" | "false" | "mixed" | "unknown";
+  verdict: string;
   title: string;
   description: string;
   confidence: number;
