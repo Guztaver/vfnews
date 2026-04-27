@@ -4,10 +4,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class GoogleFactCheckService {
 
     private final RestClient restClient;
@@ -50,7 +53,7 @@ public class GoogleFactCheckService {
             }
         } catch (Exception e) {
             // Log error
-            System.err.println("Error querying Google Fact Check API: " + e.getMessage());
+            log.error("Error querying Google Fact Check API: " + e.getMessage());
         }
 
         return null;

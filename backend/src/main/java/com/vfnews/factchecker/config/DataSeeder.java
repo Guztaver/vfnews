@@ -4,11 +4,13 @@ import com.vfnews.factchecker.domain.DatasetEntry;
 import com.vfnews.factchecker.repository.DatasetEntryRepository;
 import com.vfnews.factchecker.service.MLService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
@@ -19,7 +21,7 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (repository.count() == 0) {
-            System.out.println("Seeding initial dataset...");
+            log.info("Seeding initial dataset...");
             List<DatasetEntry> initialData = List.of(
                     // True claims
                     DatasetEntry.builder().text("As eleições de 2022 foram seguras e auditáveis.").label("true").keywords("eleição").build(),
@@ -35,11 +37,11 @@ public class DataSeeder implements CommandLineRunner {
             );
 
             repository.saveAll(initialData);
-            System.out.println("Dataset seeded successfully.");
+            log.info("Dataset seeded successfully.");
             
-            System.out.println("Training ML model...");
+            log.info("Training ML model...");
             mlService.train();
-            System.out.println("ML model trained successfully.");
+            log.info("ML model trained successfully.");
         }
     }
 }
