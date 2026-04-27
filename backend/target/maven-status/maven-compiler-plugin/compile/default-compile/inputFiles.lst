@@ -1,0 +1,15 @@
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/FactcheckerApplication.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/config/DataSeeder.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/domain/DatasetEntry.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/domain/FactCheck.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/repository/DatasetEntryRepository.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/repository/FactCheckRepository.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/service/FactCheckService.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/service/MLService.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/service/google/GoogleFactCheckResponse.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/service/google/GoogleFactCheckService.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/web/CheckClaimController.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/web/DatasetController.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/web/dto/CheckClaimRequest.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/web/dto/DatasetEntryRequest.java
+/Users/gustavo/PycharmProjects/vfnews/backend/src/main/java/com/vfnews/factchecker/web/dto/FactCheckResponse.java
