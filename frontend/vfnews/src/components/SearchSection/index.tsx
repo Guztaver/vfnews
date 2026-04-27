@@ -4,10 +4,17 @@ import * as S from "./style";
 
 interface SearchSectionProps {
   isLoading: boolean;
+  onVerify: (claim: string) => void;
 }
 
-const SearchSection: React.FC<SearchSectionProps> = ({ isLoading }) => {
+const SearchSection: React.FC<SearchSectionProps> = ({ isLoading, onVerify }) => {
   const [text, setText] = useState("");
+
+  const handleVerify = () => {
+    if (text.trim()) {
+      onVerify(text);
+    }
+  };
 
   return (
     <S.SearchCard>
@@ -20,6 +27,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({ isLoading }) => {
         <S.VerifyButton
           disabled={!text.trim() || isLoading}
           $isLoading={isLoading}
+          onClick={handleVerify}
         >
           {isLoading ? <Loader2 size={20} /> : <Search size={20} />}
           {isLoading ? "Analisando..." : "Verificar Notícia"}
