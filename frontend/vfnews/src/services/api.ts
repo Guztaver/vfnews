@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000/api/check/";
+const API_URL = import.meta.env.VITE_API_URL || "/api/check/";
 
 export interface FactCheckResult {
   id: number;

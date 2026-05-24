@@ -1,0 +1,31 @@
+[providers]
+# We'll use the java provider as base, but it doesn't really matter 
+# since we specify exactly what Nix packages to install.
+
+[phases.setup]
+nixPkgs = ["jdk21", "maven", "nodejs_22"]
+
+[phases.install]
+cmds = [
+  "cd frontend/vfnews && npm install",
+  "cd backend && mvn dependency:go-offline"
+]
+
+[phases.build]
+cmds = [
+  # Build the frontend
+  "cd frontend/vfnews && npm run build",
+  
+  # Ensure the Spring Boot static resources directory exists
+  "mkdir -p backend/src/main/resources/static",
+  
+  # Copy the compiled frontend output to the Spring Boot static folder
+  "cp -r frontend/vfnews/dist/* backend/src/main/resources/static/",
+  
+  # Package the Spring Boot application (which now includes the frontend)
+  "cd backend && mvn package -DskipTests"
+]
+
+[start]
+# Run the built JAR file
+cmd = "java -jar backend/target/factchecker-0.0.1-SNAPSHOT.jar"
