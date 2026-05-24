@@ -3,8 +3,7 @@ providers = ["java", "node"]
 
 [phases.install]
 cmds = [
-  "cd frontend/vfnews && npm install",
-  "cd backend && mvn dependency:go-offline"
+  "cd frontend/vfnews && npm install"
 ]
 
 [phases.build]
