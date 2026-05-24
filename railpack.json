@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "steps": {
+    "install": {
+      "commands": [
+        "cd frontend/vfnews && npm install"
+      ]
+    },
+    "build": {
+      "commands": [
+        "cd frontend/vfnews && npm run build",
+        "mkdir -p backend/src/main/resources/static",
+        "cp -r frontend/vfnews/dist/* backend/src/main/resources/static/",
+        "cd backend && mvn package -DskipTests"
+      ]
+    }
+  },
+  "deploy": {
+    "startCommand": "java -jar backend/target/factchecker-0.0.1-SNAPSHOT.jar"
+  }
+}
