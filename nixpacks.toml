@@ -1,6 +1,4 @@
-[providers]
-# We'll use the java provider as base, but it doesn't really matter 
-# since we specify exactly what Nix packages to install.
+providers = ["java", "node"]
 
 [phases.setup]
 nixPkgs = ["jdk21", "maven", "nodejs_22"]
