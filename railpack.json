@@ -8,11 +8,12 @@
         "npm run build --prefix frontend/vfnews",
         "mkdir -p backend/src/main/resources/static",
         "cp -r frontend/vfnews/dist/* backend/src/main/resources/static/",
-        "./backend/mvnw -f backend/pom.xml package -DskipTests"
+        "./backend/mvnw -f backend/pom.xml package -DskipTests",
+        "mkdir -p backend/jre && cp -r /mise/installs/java/21.0.2/* backend/jre/"
       ]
     }
   },
   "deploy": {
-    "startCommand": "java -jar backend/target/factchecker-0.0.1-SNAPSHOT.jar"
+    "startCommand": "backend/jre/bin/java -jar backend/target/factchecker-0.0.1-SNAPSHOT.jar"
   }
 }

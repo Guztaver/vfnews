@@ -1,2 +1,4 @@
 [tools]
 "github:railwayapp/railpack" = "latest"
+node = "22"
+java = "21"
