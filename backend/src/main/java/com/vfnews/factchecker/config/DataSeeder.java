@@ -17,6 +17,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private final DatasetEntryRepository repository;
     private final DatasetSeederService datasetSeederService;
+    private final FACTCKBRImporterService factckbrImporterService;
     private final MLService mlService;
 
     @Override
@@ -31,16 +32,17 @@ public class DataSeeder implements CommandLineRunner {
         if (repository.count() == 0) {
             log.info("Dataset empty — seeding...");
 
-            List<DatasetEntry> apiEntries = datasetSeederService.seedFromApi();
+            // 1. Import FACTCK.BR dataset (1300+ verified claims in Portuguese)
+            int factckbrCount = factckbrImporterService.importFromTSV();
+            log.info("FACTCK.BR import added {} entries.", factckbrCount);
 
-            if (apiEntries.isEmpty()) {
-                log.info("No API results — using expanded fallback dataset.");
-                repository.saveAll(buildFallbackDataset());
-            } else {
-                log.info(
-                    "API returned {} entries. Supplementing with balanced true/false examples.",
-                    apiEntries.size()
-                );
+            // 2. Supplement with Google Fact Check API data
+            List<DatasetEntry> apiEntries = datasetSeederService.seedFromApi();
+            log.info("API returned {} entries.", apiEntries.size());
+
+            // 3. Always add fallback entries for balance
+            if (repository.count() < 100) {
+                log.info("Low dataset count — adding fallback dataset.");
                 repository.saveAll(buildFallbackDataset());
             }
 
