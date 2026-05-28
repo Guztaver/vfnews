@@ -5,10 +5,12 @@ spring:
   application:
     name: factchecker
   datasource:
-    url: jdbc:sqlite:db.sqlite3
-    driver-class-name: org.sqlite.JDBC
+    url: ${DATABASE_URL:jdbc:sqlite:db.sqlite3}
+    driver-class-name: ${DATABASE_DRIVER:org.sqlite.JDBC}
+    username: ${DATABASE_USERNAME:}
+    password: ${DATABASE_PASSWORD:}
   jpa:
-    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    database-platform: ${DATABASE_PLATFORM:org.hibernate.community.dialect.SQLiteDialect}
     hibernate:
       ddl-auto: update
     show-sql: true
