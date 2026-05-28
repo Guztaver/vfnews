@@ -56,11 +56,12 @@ public class MLService {
             .map(DatasetEntry::getLabel)
             .toList();
 
-        // Build vocabulary from training data only
+        // Build vocabulary from training data only (strip punctuation for consistency)
         Set<String> vocabSet = new HashSet<>();
         SimpleTokenizer tokenizer = new SimpleTokenizer();
         for (String text : trainTexts) {
-            vocabSet.addAll(Arrays.asList(tokenizer.split(text.toLowerCase())));
+            String cleaned = text.toLowerCase().replaceAll("[^\\p{L}\\s]", " ");
+            vocabSet.addAll(Arrays.asList(tokenizer.split(cleaned)));
         }
 
         List<String> sortedVocab = vocabSet.stream().sorted().toList();
@@ -85,7 +86,11 @@ public class MLService {
         int[] yTrain = new int[trainTexts.size()];
 
         for (int i = 0; i < trainTexts.size(); i++) {
-            String[] tokens = tokenizer.split(trainTexts.get(i).toLowerCase());
+            String cleaned = trainTexts
+                .get(i)
+                .toLowerCase()
+                .replaceAll("[^\\p{L}\\s]", " ");
+            String[] tokens = tokenizer.split(cleaned);
             for (String token : tokens) {
                 if (vocabulary.containsKey(token)) {
                     xTrain[i][vocabulary.get(token)]++;
@@ -133,7 +138,11 @@ public class MLService {
 
         int correct = 0;
         for (DatasetEntry entry : testEntries) {
-            String[] tokens = tokenizer.split(entry.getText().toLowerCase());
+            String cleaned = entry
+                .getText()
+                .toLowerCase()
+                .replaceAll("[^\\p{L}\\s]", " ");
+            String[] tokens = tokenizer.split(cleaned);
             int[] features = new int[vocabulary.size()];
             for (String token : tokens) {
                 if (vocabulary.containsKey(token)) {
@@ -238,7 +247,8 @@ public class MLService {
         }
 
         SimpleTokenizer tokenizer = new SimpleTokenizer();
-        String[] tokens = tokenizer.split(claim.toLowerCase());
+        String cleaned = claim.toLowerCase().replaceAll("[^\\p{L}\\s]", " ");
+        String[] tokens = tokenizer.split(cleaned);
         int[] features = new int[vocabulary.size()];
         for (String token : tokens) {
             if (vocabulary.containsKey(token)) {
