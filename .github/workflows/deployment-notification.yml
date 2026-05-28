@@ -16,7 +16,7 @@ jobs:
       - name: Set deployment status to pending
         run: |
           curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_PAT }}" \
+            -H "Authorization: token ${{ secrets.PAT }}" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -d '{"state":"pending","description":"Deployment in progress","context":"Coolify Deploy"}'
@@ -73,7 +73,7 @@ jobs:
         if: env.deployment_result == 'success'
         run: |
           curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_PAT }}" \
+            -H "Authorization: token ${{ secrets.PAT }}" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -d '{"state":"success","description":"Deployment completed","context":"Coolify Deploy"}'
@@ -82,7 +82,7 @@ jobs:
         if: env.deployment_result == 'failure'
         run: |
           curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_PAT }}" \
+            -H "Authorization: token ${{ secrets.PAT }}" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -d '{"state":"failure","description":"Deployment failed","context":"Coolify Deploy"}'
