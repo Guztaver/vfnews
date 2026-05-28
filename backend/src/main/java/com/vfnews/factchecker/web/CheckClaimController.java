@@ -32,8 +32,11 @@ public class CheckClaimController {
             request.getClaim()
         );
         if (result == null || result.factCheck() == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                Map.of("message", "No fact check found for this claim.")
+            return ResponseEntity.ok(
+                Map.of(
+                    "message",
+                    "Não foi possível verificar esta alegação no momento. Tente novamente."
+                )
             );
         }
 

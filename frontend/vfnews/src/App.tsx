@@ -81,12 +81,33 @@ function App() {
   });
 
   const buildAssistantResponse = (result: FactCheckResult): string => {
-    const raw = (result.rating || result.result || "").trim();
-    if (!raw) return "Não foi possível determinar a veracidade desta alegação.";
+    const rating = (result.rating || "").trim();
+    const fullText = (result.result || "").trim();
 
-    const lower = raw.toLowerCase();
+    if (!rating && !fullText)
+      return "Não foi possível determinar a veracidade desta alegação.";
+
     const isApi = result.source === "API";
+    const inconclusive =
+      rating === "Inconclusivo" || rating.toLowerCase() === "inconclusivo";
 
+    // Backend sent a friendly fallback message — show it as-is
+    if (inconclusive && fullText.length > 50) {
+      return fullText;
+    }
+
+    // Generic inconclusive — give helpful suggestions
+    if (inconclusive) {
+      return (
+        "Não consegui determinar se esta alegação é verdadeira ou falsa com os dados disponíveis.\n\n" +
+        "**Sugestões:**\n" +
+        "• Tente reformular a pergunta com mais detalhes\n" +
+        "• Consulte fontes oficiais como o **TSE** (Tribunal Superior Eleitoral)\n" +
+        "• Verifique sites de fact-checking como **Aos Fatos**, **Lupa** ou **Projeto Comprova**"
+      );
+    }
+
+    const lower = rating.toLowerCase();
     const isFalse =
       lower.includes("falso") ||
       lower.includes("false") ||
@@ -116,7 +137,7 @@ function App() {
       }
 
       text +=
-        `**O que diz a verificação:** ${raw}\n\n` +
+        `**O que diz a verificação:** ${rating}\n\n` +
         `Esta análise veio da **Google Fact Check API**, que agrega apenas publishers reconhecidos (ANJ/ABERT/FENAJ).`;
       return text;
     }
@@ -162,7 +183,9 @@ function App() {
         id: nextId++,
         role: "assistant",
         content:
-          "Desculpe, ocorreu um erro ao verificar esta informação. Tente novamente.",
+          "Ops! Ocorreu um erro ao verificar esta informação. " +
+          "Isso pode ser um problema de conexão com o servidor. " +
+          "Tente novamente em alguns instantes.",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {

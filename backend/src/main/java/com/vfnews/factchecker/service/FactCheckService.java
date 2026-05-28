@@ -58,23 +58,43 @@ public class FactCheckService {
         }
 
         Map<String, String> mlResult = mlService.predict(claimText);
-        if (
-            mlResult != null && !"Inconclusivo".equals(mlResult.get("rating"))
-        ) {
+        if (mlResult != null) {
+            boolean inconclusive = "Inconclusivo".equals(
+                mlResult.get("rating")
+            );
+
             FactCheck saved = repository.save(
                 FactCheck.builder()
                     .claim(claimText)
-                    .result(mlResult.get("rating"))
+                    .result(
+                        inconclusive
+                            ? "Não foi possível determinar a veracidade desta alegação com os dados disponíveis."
+                            : mlResult.get("rating")
+                    )
                     .source(FactCheck.Source.ML)
                     .rating(mlResult.get("rating"))
                     .build()
             );
 
-            saveToDataset(claimText, mlResult.get("rating"), null);
+            if (!inconclusive) {
+                saveToDataset(claimText, mlResult.get("rating"), null);
+            }
             return new CheckResult(saved, null);
         }
 
-        return null;
+        // Ultimate fallback — always return something friendly
+        FactCheck fallback = repository.save(
+            FactCheck.builder()
+                .claim(claimText)
+                .result(
+                    "Não encontrei informações suficientes para verificar esta alegação. " +
+                        "Tente reformular a pergunta com mais detalhes ou consulte fontes oficiais como o TSE."
+                )
+                .source(FactCheck.Source.ML)
+                .rating("Inconclusivo")
+                .build()
+        );
+        return new CheckResult(fallback, null);
     }
 
     /**
