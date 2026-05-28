@@ -2,12 +2,13 @@
   "$schema": "https://schema.railpack.com",
   "steps": {
     "build": {
+      "inputs": ["."],
       "commands": [
-        "cd frontend/vfnews && npm install",
-        "cd frontend/vfnews && npm run build",
+        "npm install --prefix frontend/vfnews",
+        "npm run build --prefix frontend/vfnews",
         "mkdir -p backend/src/main/resources/static",
         "cp -r frontend/vfnews/dist/* backend/src/main/resources/static/",
-        "cd backend && ./mvnw package -DskipTests"
+        "./backend/mvnw -f backend/pom.xml package -DskipTests"
       ]
     }
   },
