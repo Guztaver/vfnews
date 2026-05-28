@@ -69,30 +69,50 @@ function App() {
   useEffect(scrollDown, [messages, loading]);
 
   const buildAssistantResponse = (result: FactCheckResult): string => {
-    const rating = result.rating || result.result;
-    if (!rating) return "Não foi possível determinar a veracidade.";
+    const raw = (result.rating || result.result || "").trim();
+    if (!raw) return "Nao foi possivel determinar a veracidade desta alegacao.";
 
-    const ratingLower = rating.toLowerCase();
+    const lower = raw.toLowerCase();
+    const isApi = result.source === "API";
 
-    if (
-      ratingLower.includes("falso") ||
-      ratingLower.includes("false") ||
-      ratingLower.includes("fake") ||
-      ratingLower.includes("mentira") ||
-      ratingLower.includes("engano")
-    ) {
-      return `Esta alegação foi classificada como **falsa** ou **enganosa**.\n\n${rating}`;
+    const isFalse =
+      lower.includes("falso") ||
+      lower.includes("false") ||
+      lower.includes("fake") ||
+      lower.includes("mentira") ||
+      lower.includes("engano");
+
+    const isTrue =
+      lower.includes("verdade") ||
+      lower.includes("true") ||
+      lower.includes("real") ||
+      lower.includes("correto");
+
+    if (isApi) {
+      const verdict = isFalse
+        ? "**falsa** ou **enganosa**"
+        : isTrue
+          ? "**verdadeira**"
+          : "**inconclusiva**";
+      return (
+        `Esta alegacao foi verificada por uma fonte externa de fact-checking e classificada como ${verdict}.\n\n` +
+        `**O que diz a verificacao:** ${raw}\n\n` +
+        `Esta analise veio da **Google Fact Check API**, que agrega verificacoes de publishers reconhecidos internacionalmente.`
+      );
     }
 
-    if (
-      ratingLower.includes("verdade") ||
-      ratingLower.includes("true") ||
-      ratingLower.includes("real")
-    ) {
-      return `Esta alegação foi classificada como **verdadeira**.\n\n${rating}`;
-    }
+    const verdict = isFalse
+      ? "provavelmente **falsa** ou **enganosa**"
+      : isTrue
+        ? "provavelmente **verdadeira**"
+        : "**inconclusiva** — o modelo nao encontrou padroes claros";
 
-    return rating;
+    return (
+      `Nao encontrei esta alegacao nas bases de fact-checking externas. Consultei meu modelo de **Machine Learning** local, que analisou o texto com base no dataset de treinamento.\n\n` +
+      `**Resultado da analise:** esta alegacao e ${verdict}.\n\n` +
+      `**Algoritmo:** Multinomial Naive Bayes | **Dataset:** afirmacoes verificadas sobre eleicoes e politica brasileira\n\n` +
+      `ATENCAO: Esta classificacao foi gerada por um modelo de Machine Learning e nao substitui uma verificacao humana. Utilize como apoio a analise critica.`
+    );
   };
 
   const handleSend = async (claim: string) => {
@@ -122,7 +142,7 @@ function App() {
         id: nextId++,
         role: "assistant",
         content:
-          "Desculpe, ocorreu um erro ao verificar esta informação. Tente novamente.",
+          "Desculpe, ocorreu um erro ao verificar esta informacao. Tente novamente.",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -140,8 +160,8 @@ function App() {
             <EmptyState>
               <h2>Verificador de Fatos com IA</h2>
               <p>
-                Cole uma notícia, manchete ou alegação e receba uma análise
-                baseada em fontes verificadas e inteligência artificial.
+                Cole uma noticia, manchete ou alegacao e receba uma analise
+                baseada em fontes verificadas e inteligencia artificial.
               </p>
             </EmptyState>
           )}

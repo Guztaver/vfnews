@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import styled, { keyframes } from "styled-components";
 import { Globe, User, Bot } from "lucide-react";
 import type { FactCheckResult } from "../../services/api";
@@ -40,13 +41,25 @@ const Bubble = styled.div<{ $role: "user" | "assistant" }>`
   padding: 0.85rem 1.1rem;
   border-radius: 1rem;
   font-size: 0.95rem;
-  line-height: 1.6;
+  line-height: 1.65;
   ${(p) =>
     p.$role === "user"
       ? "background: #1d4ed8; color: #f1f5f9; border-bottom-right-radius: 0.25rem;"
       : "background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-bottom-left-radius: 0.25rem;"}
   white-space: pre-wrap;
   word-break: break-word;
+
+  strong {
+    color: ${(p) => (p.$role === "user" ? "#fff" : "#facc15")};
+    font-weight: 600;
+  }
+
+  p {
+    margin-bottom: 0.4rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 `;
 
 const MetaSection = styled.div`
@@ -67,7 +80,9 @@ const MetaRow = styled.div`
   a {
     color: #60a5fa;
     text-decoration: none;
-    &:hover { text-decoration: underline; }
+    &:hover {
+      text-decoration: underline;
+    }
   }
 `;
 
@@ -110,44 +125,65 @@ interface Props {
   typing?: boolean;
 }
 
-const ChatMessage = ({ role, content, result, typing }: Props) => (
-  <Wrapper $role={role}>
-    <Avatar $role={role}>
-      {role === "assistant" ? <Bot size={18} /> : <User size={18} />}
-    </Avatar>
+function renderContent(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .split("\n\n")
+    .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+}
 
-    {typing ? (
-      <TypingBubble>
-        <Dot $delay={0} />
-        <Dot $delay={0.2} />
-        <Dot $delay={0.4} />
-      </TypingBubble>
-    ) : (
-      <Bubble $role={role}>
-        {content}
-        {result && (
-          <MetaSection>
-            {result.publisher && (
-              <MetaRow>
-                <SourceTag>
-                  <Globe size={12} />{" "}
-                  {result.source === "API" ? "Google Fact Check API" : "Modelo Local"}
-                </SourceTag>
-                <span>{result.publisher}</span>
-              </MetaRow>
-            )}
-            {result.url && (
-              <MetaRow>
-                <a href={result.url} target="_blank" rel="noopener noreferrer">
-                  Ver fonte original →
-                </a>
-              </MetaRow>
-            )}
-          </MetaSection>
-        )}
-      </Bubble>
-    )}
-  </Wrapper>
-);
+const ChatMessage = ({ role, content, result, typing }: Props) => {
+  const html = useMemo(
+    () => (content ? renderContent(content) : ""),
+    [content],
+  );
+
+  return (
+    <Wrapper $role={role}>
+      <Avatar $role={role}>
+        {role === "assistant" ? <Bot size={18} /> : <User size={18} />}
+      </Avatar>
+
+      {typing ? (
+        <TypingBubble>
+          <Dot $delay={0} />
+          <Dot $delay={0.2} />
+          <Dot $delay={0.4} />
+        </TypingBubble>
+      ) : (
+        <Bubble $role={role}>
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+          {result && (
+            <MetaSection>
+              {result.publisher && (
+                <MetaRow>
+                  <SourceTag>
+                    <Globe size={12} />{" "}
+                    {result.source === "API"
+                      ? "Google Fact Check API"
+                      : "Modelo Local"}
+                  </SourceTag>
+                  <span>{result.publisher}</span>
+                </MetaRow>
+              )}
+              {result.url && (
+                <MetaRow>
+                  <a
+                    href={result.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ver fonte original &rarr;
+                  </a>
+                </MetaRow>
+              )}
+            </MetaSection>
+          )}
+        </Bubble>
+      )}
+    </Wrapper>
+  );
+};
 
 export default ChatMessage;
