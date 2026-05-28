@@ -24,7 +24,7 @@ const Layout = styled.div`
   width: 100%;
 `;
 
-const Messages = styled.div`
+const Messages = styled.div.attrs({ role: "log" })`
   flex: 1;
   overflow-y: auto;
   padding-bottom: 0.5rem;
@@ -75,7 +75,10 @@ function App() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  useEffect(scrollDown, [messages, loading]);
+  // Auto-scroll on new messages or loading state change
+  useEffect(() => {
+    scrollDown();
+  });
 
   const buildAssistantResponse = (result: FactCheckResult): string => {
     const raw = (result.rating || result.result || "").trim();
@@ -189,7 +192,7 @@ function App() {
 
           {loading && <ChatMessage role="assistant" typing />}
 
-          <div ref={bottomRef} />
+          <div ref={bottomRef} style={{ height: 1 }} />
         </Messages>
         <ChatInput loading={loading} onSend={handleSend} />
       </Layout>

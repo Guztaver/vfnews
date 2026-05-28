@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import React from "react";
 import styled, { keyframes } from "styled-components";
 import { Globe, User, Bot } from "lucide-react";
 import type { FactCheckResult } from "../../services/api";
@@ -142,17 +143,30 @@ interface Props {
   typing?: boolean;
 }
 
-function renderContent(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .split("\n\n")
-    .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
-    .join("");
+function renderContent(text: string): React.ReactNode[] {
+  return text.split("\n\n").map((para, i) => {
+    const parts = para.split(/(\*\*.+?\*\*)/g);
+    return (
+      <p key={i}>
+        {parts.map((part, j) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={j}>{part.slice(2, -2)}</strong>;
+          }
+          return part.split("\n").map((line, k) => (
+            <React.Fragment key={`${j}-${k}`}>
+              {k > 0 && <br />}
+              {line}
+            </React.Fragment>
+          ));
+        })}
+      </p>
+    );
+  });
 }
 
 const ChatMessage = ({ role, content, result, typing }: Props) => {
-  const html = useMemo(
-    () => (content ? renderContent(content) : ""),
+  const nodes = useMemo(
+    () => (content ? renderContent(content) : null),
     [content],
   );
 
@@ -170,7 +184,7 @@ const ChatMessage = ({ role, content, result, typing }: Props) => {
         </TypingBubble>
       ) : (
         <Bubble $role={role}>
-          <div dangerouslySetInnerHTML={{ __html: html }} />
+          {nodes}
           {result && (
             <MetaSection>
               {result.publisher && (

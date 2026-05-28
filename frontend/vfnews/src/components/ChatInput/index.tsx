@@ -80,11 +80,12 @@ const ChatInput = ({ loading, onSend }: Props) => {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (ref.current) {
-      ref.current.style.height = "auto";
-      ref.current.style.height = Math.min(ref.current.scrollHeight, 120) + "px";
+    const el = ref.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 120) + "px";
     }
-  }, [text]);
+  });
 
   const handleSend = () => {
     const trimmed = text.trim();
