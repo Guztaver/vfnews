@@ -15,15 +15,20 @@ const pulse = keyframes`
 
 const Wrapper = styled.div<{ $role: "user" | "assistant" }>`
   display: flex;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
+  gap: 0.5rem;
+  padding: 0.75rem 0.75rem;
   animation: ${fadeIn} 0.3s ease-out;
   ${(p) => p.$role === "user" && "flex-direction: row-reverse;"}
+
+  @media (min-width: 480px) {
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+  }
 `;
 
 const Avatar = styled.div<{ $role: "user" | "assistant" }>`
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -34,20 +39,32 @@ const Avatar = styled.div<{ $role: "user" | "assistant" }>`
       ? "background: linear-gradient(135deg, #20bbad, #33415b);"
       : "background: #334155;"}
   color: #fff;
+
+  @media (min-width: 480px) {
+    width: 34px;
+    height: 34px;
+  }
 `;
 
 const Bubble = styled.div<{ $role: "user" | "assistant" }>`
-  max-width: 80%;
-  padding: 0.85rem 1.1rem;
-  border-radius: 1rem;
-  font-size: 0.95rem;
-  line-height: 1.65;
+  max-width: 88%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
   ${(p) =>
     p.$role === "user"
       ? "background: #1d4ed8; color: #f1f5f9; border-bottom-right-radius: 0.25rem;"
       : "background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-bottom-left-radius: 0.25rem;"}
   white-space: pre-wrap;
   word-break: break-word;
+
+  @media (min-width: 480px) {
+    max-width: 80%;
+    padding: 0.85rem 1.1rem;
+    border-radius: 1rem;
+    font-size: 0.95rem;
+  }
 
   strong {
     color: ${(p) => (p.$role === "user" ? "#fff" : "#facc15")};

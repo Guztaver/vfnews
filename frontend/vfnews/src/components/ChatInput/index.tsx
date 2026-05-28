@@ -3,13 +3,18 @@ import { Send, Loader2 } from "lucide-react";
 import styled from "styled-components";
 
 const Bar = styled.div`
-  padding: 0.75rem 1rem 1rem;
+  padding: 0.5rem 0.6rem 0.75rem;
   border-top: 1px solid #1e293b;
   background: #0f172a;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: flex-end;
   flex-shrink: 0;
+
+  @media (min-width: 480px) {
+    padding: 0.75rem 1rem 1rem;
+    gap: 0.5rem;
+  }
 `;
 
 const Input = styled.textarea`
@@ -17,13 +22,13 @@ const Input = styled.textarea`
   background: #1e293b;
   border: 1px solid #334155;
   border-radius: 0.75rem;
-  padding: 0.7rem 0.9rem;
+  padding: 0.6rem 0.75rem;
   color: #e2e8f0;
   font-size: 0.9rem;
   font-family: inherit;
   resize: none;
   outline: none;
-  max-height: 120px;
+  max-height: 100px;
   line-height: 1.4;
   transition: border-color 0.2s;
 
@@ -34,11 +39,16 @@ const Input = styled.textarea`
   &::placeholder {
     color: #64748b;
   }
+
+  @media (min-width: 480px) {
+    padding: 0.7rem 0.9rem;
+    max-height: 120px;
+  }
 `;
 
 const SendBtn = styled.button<{ $active: boolean }>`
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: none;
   display: flex;
@@ -49,8 +59,14 @@ const SendBtn = styled.button<{ $active: boolean }>`
   background: ${(p) => (p.$active ? "#3b82f6" : "#1e293b")};
   color: ${(p) => (p.$active ? "#fff" : "#475569")};
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
   &:hover {
     background: ${(p) => (p.$active ? "#2563eb" : "#1e293b")};
+  }
+
+  @media (min-width: 480px) {
+    width: 38px;
+    height: 38px;
   }
 `;
 

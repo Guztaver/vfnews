@@ -18,6 +18,7 @@ const Layout = styled.div`
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   max-width: 820px;
   margin: 0 auto;
   width: 100%;
@@ -29,6 +30,7 @@ const Messages = styled.div`
   padding-bottom: 0.5rem;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const EmptyState = styled.div`
@@ -38,20 +40,27 @@ const EmptyState = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   gap: 0.75rem;
 
   h2 {
-    font-size: 1.3rem;
+    font-size: 1.15rem;
     font-weight: 600;
     color: #e2e8f0;
+    @media (min-width: 480px) {
+      font-size: 1.3rem;
+    }
   }
 
   p {
     color: #64748b;
-    font-size: 0.9rem;
-    max-width: 380px;
+    font-size: 0.85rem;
+    max-width: 320px;
     line-height: 1.5;
+    @media (min-width: 480px) {
+      font-size: 0.9rem;
+      max-width: 380px;
+    }
   }
 `;
 

@@ -12,6 +12,12 @@ export const Global = createGlobalStyle`
     background: #0f172a;
     color: #e2e8f0;
     min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  input, textarea, button {
+    font-size: 16px;
+    -webkit-appearance: none;
   }
 
   #root {
