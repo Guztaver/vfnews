@@ -23,6 +23,12 @@ public class DataSeeder implements CommandLineRunner {
         // Clean old entries that lack publisher info (pre-whitelist data)
         int removed = datasetSeederService.cleanUntrustedEntries();
 
+        // If we cleaned entries, delete stale model files so they get rebuilt
+        if (removed > 0) {
+            new java.io.File("model.ser").delete();
+            new java.io.File("vocab.ser").delete();
+        }
+
         if (repository.count() == 0) {
             log.info("Dataset empty — seeding...");
 

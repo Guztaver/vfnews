@@ -142,6 +142,7 @@ public class MLService {
             }
 
             int predicted = model.predict(features);
+            if (predicted < 0 || predicted >= numClasses) continue;
             int actual = labelMap.getOrDefault(entry.getLabel(), -1);
 
             if (actual >= 0) {
@@ -241,6 +242,12 @@ public class MLService {
         }
 
         int prediction = model.predict(features);
+
+        // Guard against invalid predictions (stale model / all-zero features)
+        if (prediction < 0 || prediction >= labels.length) {
+            return null;
+        }
+
         Map<String, String> result = new HashMap<>();
         result.put("text", claim);
         result.put("rating", labels[prediction]);
