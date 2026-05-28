@@ -3,7 +3,6 @@
   "steps": {
     "build": {
       "commands": [
-        "COPY:. .",
         "cd frontend/vfnews && npm install",
         "cd frontend/vfnews && npm run build",
         "mkdir -p backend/src/main/resources/static",

@@ -15,3 +15,9 @@ target/
 
 # Log
 *.log
+
+# Secrets & local config
+.env
+.env.*
+application-local.yml
+*.local
