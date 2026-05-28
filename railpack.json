@@ -2,8 +2,8 @@
   "$schema": "https://schema.railpack.com",
   "steps": {
     "build": {
-      "inputs": ["."],
       "commands": [
+        { "src": ".", "dest": "." },
         "npm install --prefix frontend/vfnews",
         "npm run build --prefix frontend/vfnews",
         "mkdir -p backend/src/main/resources/static",
