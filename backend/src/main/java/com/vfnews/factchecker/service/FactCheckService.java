@@ -6,10 +6,12 @@ import com.vfnews.factchecker.domain.FactCheck;
 import com.vfnews.factchecker.repository.DatasetEntryRepository;
 import com.vfnews.factchecker.repository.FactCheckRepository;
 import com.vfnews.factchecker.service.google.GoogleFactCheckService;
-import java.util.Map;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FactCheckService {
@@ -19,32 +21,40 @@ public class FactCheckService {
     private final GoogleFactCheckService googleService;
     private final MLService mlService;
 
-    /** Record so the controller can surface the API-matched claim text. */
     public record CheckResult(FactCheck factCheck, String matchedText) {}
 
     public CheckResult checkClaim(String claimText) {
         Map<String, String> googleResult = googleService.checkClaim(claimText);
         if (googleResult != null) {
             String matched = googleResult.get("text");
-            FactCheck saved = repository.save(
-                FactCheck.builder()
-                    .claim(claimText)
-                    .result(googleResult.get("rating"))
-                    .source(FactCheck.Source.API)
-                    .rating(googleResult.get("rating"))
-                    .publisher(googleResult.get("publisher"))
-                    .url(googleResult.get("url"))
-                    .build()
-            );
 
-            // Save matched claim text as dataset entry for ML training
-            saveToDataset(
-                matched != null ? matched : claimText,
-                googleResult.get("rating"),
-                googleResult.get("publisher")
-            );
+            if (!isRelevant(claimText, matched)) {
+                log.info(
+                    "API matched unrelated claim '{}' for query '{}' — falling back to ML",
+                    matched,
+                    claimText
+                );
+                // fall through to ML below
+            } else {
+                FactCheck saved = repository.save(
+                    FactCheck.builder()
+                        .claim(claimText)
+                        .result(googleResult.get("rating"))
+                        .source(FactCheck.Source.API)
+                        .rating(googleResult.get("rating"))
+                        .publisher(googleResult.get("publisher"))
+                        .url(googleResult.get("url"))
+                        .build()
+                );
 
-            return new CheckResult(saved, normalize(matched, claimText));
+                saveToDataset(
+                    matched != null ? matched : claimText,
+                    googleResult.get("rating"),
+                    googleResult.get("publisher")
+                );
+
+                return new CheckResult(saved, normalize(matched, claimText));
+            }
         }
 
         Map<String, String> mlResult = mlService.predict(claimText);
@@ -67,7 +77,90 @@ public class FactCheckService {
         return null;
     }
 
-    /** Returns null when the matched text equals the query (no mismatch to show). */
+    /**
+     * Returns true if the matched claim is relevant to the user's query.
+     * Uses token overlap — at least 30% of query tokens must appear in the matched claim.
+     */
+    private boolean isRelevant(String query, String matched) {
+        if (matched == null || matched.isBlank()) return true; // no matched text = assume relevant
+
+        Set<String> queryTokens = tokenize(query);
+        if (queryTokens.isEmpty()) return true;
+
+        Set<String> matchedTokens = tokenize(matched);
+
+        int overlap = 0;
+        for (String t : queryTokens) {
+            if (matchedTokens.contains(t)) overlap++;
+        }
+
+        double ratio = (double) overlap / queryTokens.size();
+        return ratio >= 0.3;
+    }
+
+    private Set<String> tokenize(String text) {
+        Set<String> tokens = new HashSet<>();
+        for (String word : text
+            .toLowerCase()
+            .replaceAll("[^\\p{L}\\d\\s]", " ")
+            .split("\\s+")) {
+            if (word.length() >= 3 && !STOPWORDS.contains(word)) {
+                tokens.add(word);
+            }
+        }
+        return tokens;
+    }
+
+    private static final Set<String> STOPWORDS = Set.of(
+        "que",
+        "com",
+        "para",
+        "uma",
+        "isso",
+        "esse",
+        "essa",
+        "este",
+        "esta",
+        "dos",
+        "das",
+        "por",
+        "como",
+        "mas",
+        "foi",
+        "era",
+        "sao",
+        "tem",
+        "the",
+        "and",
+        "for",
+        "are",
+        "was",
+        "not",
+        "you",
+        "all",
+        "can",
+        "had",
+        "her",
+        "was",
+        "one",
+        "our",
+        "out",
+        "has",
+        "have",
+        "from",
+        "they",
+        "this",
+        "that",
+        "will",
+        "what",
+        "when",
+        "where",
+        "which",
+        "with",
+        "about",
+        "each"
+    );
+
     private static String normalize(String matched, String query) {
         if (matched == null || matched.isBlank()) return null;
         String a = matched
