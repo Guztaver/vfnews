@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -18,8 +20,11 @@ public class DatasetSeederService {
     private final GoogleFactCheckService googleFactCheckService;
     private final DatasetEntryRepository repository;
 
+    @Value("${google.factcheck.trusted-publishers:}")
+    private List<String> trustedPublishers;
+
     private static final List<String> KEYWORDS = List.of(
-        "eleição",
+        "eleicao",
         "bolsonaro",
         "lula",
         "pt",
@@ -29,11 +34,39 @@ public class DatasetSeederService {
         "fraude"
     );
 
-    private static final int MAX_PER_KEYWORD = 20;
+    private static final int MAX_PER_KEYWORD = 30;
+
+    /**
+     * Removes dataset entries that came from non-trusted publishers or have
+     * no publisher set (old data from before this field existed).
+     */
+    @Transactional
+    public int cleanUntrustedEntries() {
+        List<DatasetEntry> all = repository.findAll();
+        List<Long> toDelete = new ArrayList<>();
+
+        for (DatasetEntry entry : all) {
+            String pub = entry.getPublisher();
+            if (pub == null || pub.isBlank()) {
+                // Old entries without publisher info — safe to remove,
+                // they will be re-seeded from trusted sources.
+                toDelete.add(entry.getId());
+            }
+        }
+
+        if (!toDelete.isEmpty()) {
+            repository.deleteAllById(toDelete);
+            log.info(
+                "Removed {} old dataset entries (no publisher info) — will re-seed from trusted sources",
+                toDelete.size()
+            );
+        }
+        return toDelete.size();
+    }
 
     /**
      * Seeds the dataset by querying the Google Fact Check API for each keyword.
-     * Returns the list of newly added DatasetEntries.
+     * The API now filters by trusted publishers internally.
      */
     public List<DatasetEntry> seedFromApi() {
         List<DatasetEntry> added = new ArrayList<>();
@@ -48,22 +81,19 @@ public class DatasetSeederService {
 
             for (Map<String, String> result : results) {
                 String text = result.get("text");
-                if (text == null || text.isBlank()) {
-                    continue;
-                }
+                if (text == null || text.isBlank()) continue;
 
-                // Skip duplicates
-                if (repository.existsByText(text)) {
-                    continue;
-                }
+                if (repository.existsByText(text)) continue;
 
                 String rating = result.get("rating");
                 String label = simplifyRating(rating);
+                String publisher = result.get("publisher");
 
                 DatasetEntry entry = DatasetEntry.builder()
                     .text(text)
                     .label(label)
                     .keywords(keyword)
+                    .publisher(publisher)
                     .build();
                 repository.save(entry);
                 added.add(entry);
@@ -71,7 +101,7 @@ public class DatasetSeederService {
         }
 
         log.info(
-            "DatasetSeederService: added {} new entries from Google Fact Check API.",
+            "DatasetSeederService: added {} new entries from trusted publishers",
             added.size()
         );
         return added;
@@ -82,9 +112,7 @@ public class DatasetSeederService {
      * "false", "true", or "mixed".
      */
     public static String simplifyRating(String rating) {
-        if (rating == null) {
-            return "mixed";
-        }
+        if (rating == null) return "mixed";
         String lower = rating.toLowerCase();
         if (
             lower.contains("falso") ||

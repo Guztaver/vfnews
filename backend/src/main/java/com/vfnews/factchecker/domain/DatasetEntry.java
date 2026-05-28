@@ -1,13 +1,12 @@
 package com.vfnews.factchecker.domain;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -26,6 +25,8 @@ public class DatasetEntry {
     private String label;
 
     private String keywords;
+
+    private String publisher;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

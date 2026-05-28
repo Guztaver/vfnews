@@ -1,12 +1,12 @@
 package com.vfnews.factchecker.web.dto;
 
 import com.vfnews.factchecker.domain.FactCheck;
-import lombok.Data;
-
 import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
 public class FactCheckResponse {
+
     private Long id;
     private String claim;
     private String result;
@@ -14,6 +14,7 @@ public class FactCheckResponse {
     private String rating;
     private String publisher;
     private String url;
+    private String matchedClaim;
     private LocalDateTime createdAt;
 
     public static FactCheckResponse fromEntity(FactCheck entity) {

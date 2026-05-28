@@ -19,10 +19,13 @@ public class FactCheckService {
     private final GoogleFactCheckService googleService;
     private final MLService mlService;
 
-    public FactCheck checkClaim(String claimText) {
-        // 1. Try Google Fact Check API
+    /** Record so the controller can surface the API-matched claim text. */
+    public record CheckResult(FactCheck factCheck, String matchedText) {}
+
+    public CheckResult checkClaim(String claimText) {
         Map<String, String> googleResult = googleService.checkClaim(claimText);
         if (googleResult != null) {
+            String matched = googleResult.get("text");
             FactCheck saved = repository.save(
                 FactCheck.builder()
                     .claim(claimText)
@@ -34,13 +37,16 @@ public class FactCheckService {
                     .build()
             );
 
-            // Also save as DatasetEntry for future ML training
-            saveToDataset(claimText, googleResult.get("rating"));
+            // Save matched claim text as dataset entry for ML training
+            saveToDataset(
+                matched != null ? matched : claimText,
+                googleResult.get("rating"),
+                googleResult.get("publisher")
+            );
 
-            return saved;
+            return new CheckResult(saved, normalize(matched, claimText));
         }
 
-        // 2. Try Local ML Model
         Map<String, String> mlResult = mlService.predict(claimText);
         if (mlResult != null) {
             FactCheck saved = repository.save(
@@ -52,19 +58,25 @@ public class FactCheckService {
                     .build()
             );
 
-            // Also save as DatasetEntry for future ML training
-            saveToDataset(claimText, mlResult.get("rating"));
-
-            return saved;
+            saveToDataset(claimText, mlResult.get("rating"), null);
+            return new CheckResult(saved, null);
         }
 
         return null;
     }
 
-    /**
-     * Save the checked claim as a DatasetEntry for future ML training.
-     */
-    private void saveToDataset(String text, String rating) {
+    /** Returns null when the matched text equals the query (no mismatch to show). */
+    private static String normalize(String matched, String query) {
+        if (matched == null || matched.isBlank()) return null;
+        String a = matched
+            .trim()
+            .toLowerCase()
+            .replaceAll("[^\\p{L}\\d\\s]", "");
+        String b = query.trim().toLowerCase().replaceAll("[^\\p{L}\\d\\s]", "");
+        return a.equals(b) ? null : matched;
+    }
+
+    private void saveToDataset(String text, String rating, String publisher) {
         if (
             text != null &&
             !text.isBlank() &&
@@ -76,18 +88,14 @@ public class FactCheckService {
                 .text(text)
                 .label(label)
                 .keywords(keywords)
+                .publisher(publisher)
                 .build();
             datasetEntryRepository.save(entry);
         }
     }
 
-    /**
-     * Extract first few words from the claim text as keywords.
-     */
     private String extractKeywords(String text) {
-        if (text == null || text.isBlank()) {
-            return "";
-        }
+        if (text == null || text.isBlank()) return "";
         String[] words = text.trim().split("\\s+");
         int limit = Math.min(words.length, 4);
         StringBuilder sb = new StringBuilder();

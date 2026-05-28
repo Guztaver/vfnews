@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,14 +16,46 @@ import org.springframework.web.client.RestClient;
 public class GoogleFactCheckService {
 
     private final RestClient restClient;
+    private final Set<String> trustedPublishers;
 
     @Value("${google.factcheck.api.key:}")
     private String apiKey;
 
-    public GoogleFactCheckService() {
+    public GoogleFactCheckService(
+        @Value("${google.factcheck.trusted-publishers:}") List<
+            String
+        > publishers
+    ) {
         this.restClient = RestClient.builder()
             .baseUrl("https://factchecktools.googleapis.com/v1alpha1")
             .build();
+        this.trustedPublishers =
+            publishers != null
+                ? publishers
+                      .stream()
+                      .map(String::trim)
+                      .map(String::toLowerCase)
+                      .filter(s -> !s.isEmpty())
+                      .collect(Collectors.toSet())
+                : Set.of();
+        log.info(
+            "Loaded {} trusted publishers for fact-check filtering",
+            trustedPublishers.size()
+        );
+    }
+
+    /** Returns whether a publisher name matches any trusted publisher in the whitelist. */
+    private boolean isTrusted(String publisherName) {
+        if (publisherName == null || publisherName.isBlank()) {
+            return false;
+        }
+        String lower = publisherName.toLowerCase().trim();
+        for (String trusted : trustedPublishers) {
+            if (lower.contains(trusted) || trusted.contains(lower)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<Map<String, String>> searchBulk(String query, int maxResults) {
@@ -34,6 +68,7 @@ public class GoogleFactCheckService {
         }
 
         String pageToken = null;
+        int skipped = 0;
 
         try {
             do {
@@ -67,15 +102,21 @@ public class GoogleFactCheckService {
                             GoogleFactCheckResponse.ClaimReview review = claim
                                 .getClaimReview()
                                 .getFirst();
+                            String publisher =
+                                review.getPublisher() != null
+                                    ? review.getPublisher().getName()
+                                    : null;
+
+                            // Filter: only include results from trusted publishers
+                            if (!isTrusted(publisher)) {
+                                skipped++;
+                                continue;
+                            }
+
                             Map<String, String> result = new HashMap<>();
                             result.put("text", claim.getText());
                             result.put("claimant", claim.getClaimant());
-                            result.put(
-                                "publisher",
-                                review.getPublisher() != null
-                                    ? review.getPublisher().getName()
-                                    : null
-                            );
+                            result.put("publisher", publisher);
                             result.put("rating", review.getTextualRating());
                             result.put("url", review.getUrl());
                             results.add(result);
@@ -99,6 +140,12 @@ public class GoogleFactCheckService {
             );
         }
 
+        log.info(
+            "Bulk search '{}': {} trusted results kept, {} non-trusted skipped",
+            query,
+            results.size(),
+            skipped
+        );
         return results;
     }
 
@@ -126,34 +173,42 @@ public class GoogleFactCheckService {
                 response.getClaims() != null &&
                 !response.getClaims().isEmpty()
             ) {
-                GoogleFactCheckResponse.Claim claimData = response
-                    .getClaims()
-                    .getFirst();
-                if (
-                    claimData.getClaimReview() != null &&
-                    !claimData.getClaimReview().isEmpty()
-                ) {
-                    GoogleFactCheckResponse.ClaimReview review = claimData
-                        .getClaimReview()
-                        .getFirst();
-                    Map<String, String> result = new HashMap<>();
-                    result.put("text", claimData.getText());
-                    result.put("claimant", claimData.getClaimant());
-                    result.put(
-                        "publisher",
-                        review.getPublisher() != null
-                            ? review.getPublisher().getName()
-                            : null
-                    );
-                    result.put("rating", review.getTextualRating());
-                    result.put("url", review.getUrl());
-                    return result;
+                // Iterate all claims to find the first one from a trusted publisher
+                for (GoogleFactCheckResponse.Claim claimData : response.getClaims()) {
+                    if (
+                        claimData.getClaimReview() != null &&
+                        !claimData.getClaimReview().isEmpty()
+                    ) {
+                        GoogleFactCheckResponse.ClaimReview review = claimData
+                            .getClaimReview()
+                            .getFirst();
+                        String publisher =
+                            review.getPublisher() != null
+                                ? review.getPublisher().getName()
+                                : null;
+
+                        if (!isTrusted(publisher)) {
+                            continue;
+                        }
+
+                        Map<String, String> result = new HashMap<>();
+                        result.put("text", claimData.getText());
+                        result.put("claimant", claimData.getClaimant());
+                        result.put("publisher", publisher);
+                        result.put("rating", review.getTextualRating());
+                        result.put("url", review.getUrl());
+                        return result;
+                    }
                 }
+                log.debug(
+                    "All results for '{}' were from non-trusted publishers — falling back to ML",
+                    claim
+                );
             }
         } catch (Exception e) {
-            // Log error
             log.error(
-                "Error querying Google Fact Check API: " + e.getMessage()
+                "Error querying Google Fact Check API: {}",
+                e.getMessage()
             );
         }
 

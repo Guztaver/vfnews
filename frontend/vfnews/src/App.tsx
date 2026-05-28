@@ -94,11 +94,19 @@ function App() {
         : isTrue
           ? "**verdadeira**"
           : "**inconclusiva**";
-      return (
-        `Esta alegacao foi verificada por uma fonte externa de fact-checking e classificada como ${verdict}.\n\n` +
+      const matched = result.matchedClaim;
+      const hasMatch = matched && matched.trim().length > 0;
+
+      let text = `Esta alegacao foi verificada por uma fonte externa de fact-checking e classificada como ${verdict}.\n\n`;
+
+      if (hasMatch) {
+        text += `**Alegacao verificada pela API:** "${matched}"\n\n`;
+      }
+
+      text +=
         `**O que diz a verificacao:** ${raw}\n\n` +
-        `Esta analise veio da **Google Fact Check API**, que agrega verificacoes de publishers reconhecidos internacionalmente.`
-      );
+        `Esta analise veio da **Google Fact Check API**, que agrega apenas publishers reconhecidos (ANJ/ABERT/FENAJ).`;
+      return text;
     }
 
     const verdict = isFalse

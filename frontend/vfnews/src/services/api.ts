@@ -8,6 +8,7 @@ export interface FactCheckResult {
   rating: string | null;
   publisher: string | null;
   url: string | null;
+  matchedClaim: string | null;
   created_at: string;
 }
 

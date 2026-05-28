@@ -15,53 +15,58 @@ import org.springframework.stereotype.Component;
 public class DataSeeder implements CommandLineRunner {
 
     private final DatasetEntryRepository repository;
-    private final MLService mlService;
     private final DatasetSeederService datasetSeederService;
+    private final MLService mlService;
 
     @Override
     public void run(String... args) throws Exception {
-        if (repository.count() == 0) {
-            log.info("Seeding initial dataset...");
+        // Clean old entries that lack publisher info (pre-whitelist data)
+        int removed = datasetSeederService.cleanUntrustedEntries();
 
-            // Try fetching from Google Fact Check API first
+        if (repository.count() == 0) {
+            log.info("Dataset empty — seeding...");
+
+            // Try fetching from Google Fact Check API (filtered by trusted publishers)
             List<DatasetEntry> apiEntries = datasetSeederService.seedFromApi();
 
             if (apiEntries.isEmpty()) {
                 log.info(
-                    "No API data retrieved. Falling back to hardcoded entries."
+                    "No API results (key missing?) — using hardcoded fallback dataset."
                 );
-                List<DatasetEntry> initialData = List.of(
-                    // True claims
+                List<DatasetEntry> fallback = List.of(
                     DatasetEntry.builder()
-                        .text("As eleições de 2022 foram seguras e auditáveis.")
+                        .text("As eleicoes de 2022 foram seguras e auditaveis.")
                         .label("true")
-                        .keywords("eleição")
+                        .keywords("eleicao")
+                        .publisher("TSE")
                         .build(),
                     DatasetEntry.builder()
                         .text(
-                            "O sistema de votação eletrônico brasileiro é utilizado desde 1996."
+                            "O sistema de votacao eletronico brasileiro e utilizado desde 1996."
                         )
                         .label("true")
                         .keywords("urna, voto")
+                        .publisher("TSE")
                         .build(),
                     DatasetEntry.builder()
-                        .text("A campanha eleitoral oficial começa em agosto.")
+                        .text("A campanha eleitoral oficial comeca em agosto.")
                         .label("true")
                         .keywords("campanha")
+                        .publisher("TSE")
                         .build(),
-
-                    // False/Misleading claims
                     DatasetEntry.builder()
-                        .text("As urnas eletrônicas foram fraudadas em 2018.")
+                        .text("As urnas eletronicas foram fraudadas em 2018.")
                         .label("false")
                         .keywords("urna, fraude")
+                        .publisher("TSE")
                         .build(),
                     DatasetEntry.builder()
                         .text(
-                            "O voto impresso é a única forma de garantir uma eleição sem fraude."
+                            "O voto impresso e a unica forma de garantir uma eleicao sem fraude."
                         )
                         .label("false")
                         .keywords("voto, fraude")
+                        .publisher("TSE")
                         .build(),
                     DatasetEntry.builder()
                         .text(
@@ -69,13 +74,15 @@ public class DataSeeder implements CommandLineRunner {
                         )
                         .label("false")
                         .keywords("voto, fraude")
+                        .publisher("TSE")
                         .build(),
                     DatasetEntry.builder()
                         .text(
-                            "Lula foi solto apenas por uma manobra política sem base legal."
+                            "Lula foi solto apenas por uma manobra politica sem base legal."
                         )
                         .label("false")
                         .keywords("lula, pt")
+                        .publisher("TSE")
                         .build(),
                     DatasetEntry.builder()
                         .text(
@@ -83,16 +90,22 @@ public class DataSeeder implements CommandLineRunner {
                         )
                         .label("false")
                         .keywords("bolsonaro, urna")
+                        .publisher("TSE")
                         .build()
                 );
-                repository.saveAll(initialData);
+                repository.saveAll(fallback);
             }
 
-            log.info("Dataset seeded successfully.");
-
-            log.info("Training ML model...");
-            mlService.train();
-            log.info("ML model trained successfully.");
+            log.info("Dataset seeded: {} entries total.", repository.count());
+        } else {
+            log.info(
+                "Dataset already has {} entries — skipping seed.",
+                repository.count()
+            );
         }
+
+        log.info("Training ML model...");
+        mlService.train();
+        log.info("ML model trained. Metrics: {}", mlService.getMetrics());
     }
 }
