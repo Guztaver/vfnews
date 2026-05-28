@@ -142,7 +142,6 @@ public class FactCheckService {
         "can",
         "had",
         "her",
-        "was",
         "one",
         "our",
         "out",
