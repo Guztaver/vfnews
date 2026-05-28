@@ -70,7 +70,7 @@ function App() {
 
   const buildAssistantResponse = (result: FactCheckResult): string => {
     const raw = (result.rating || result.result || "").trim();
-    if (!raw) return "Nao foi possivel determinar a veracidade desta alegacao.";
+    if (!raw) return "Não foi possível determinar a veracidade desta alegação.";
 
     const lower = raw.toLowerCase();
     const isApi = result.source === "API";
@@ -97,15 +97,15 @@ function App() {
       const matched = result.matchedClaim;
       const hasMatch = matched && matched.trim().length > 0;
 
-      let text = `Esta alegacao foi verificada por uma fonte externa de fact-checking e classificada como ${verdict}.\n\n`;
+      let text = `Esta alegação foi verificada por uma fonte externa de fact-checking e classificada como ${verdict}.\n\n`;
 
       if (hasMatch) {
-        text += `**Alegacao verificada pela API:** "${matched}"\n\n`;
+        text += `**Alegação verificada pela API:** "${matched}"\n\n`;
       }
 
       text +=
-        `**O que diz a verificacao:** ${raw}\n\n` +
-        `Esta analise veio da **Google Fact Check API**, que agrega apenas publishers reconhecidos (ANJ/ABERT/FENAJ).`;
+        `**O que diz a verificação:** ${raw}\n\n` +
+        `Esta análise veio da **Google Fact Check API**, que agrega apenas publishers reconhecidos (ANJ/ABERT/FENAJ).`;
       return text;
     }
 
@@ -113,13 +113,13 @@ function App() {
       ? "provavelmente **falsa** ou **enganosa**"
       : isTrue
         ? "provavelmente **verdadeira**"
-        : "**inconclusiva** — o modelo nao encontrou padroes claros";
+        : "**inconclusiva** — o modelo não encontrou padrões claros";
 
     return (
-      `Nao encontrei esta alegacao nas bases de fact-checking externas. Consultei meu modelo de **Machine Learning** local, que analisou o texto com base no dataset de treinamento.\n\n` +
-      `**Resultado da analise:** esta alegacao e ${verdict}.\n\n` +
-      `**Algoritmo:** Multinomial Naive Bayes | **Dataset:** afirmacoes verificadas sobre eleicoes e politica brasileira\n\n` +
-      `ATENCAO: Esta classificacao foi gerada por um modelo de Machine Learning e nao substitui uma verificacao humana. Utilize como apoio a analise critica.`
+      `Não encontrei esta alegação nas bases de fact-checking externas. Consultei meu modelo de **Machine Learning** local, que analisou o texto com base no dataset de treinamento.\n\n` +
+      `**Resultado da análise:** esta alegação é ${verdict}.\n\n` +
+      `**Algoritmo:** Multinomial Naive Bayes | **Dataset:** afirmações verificadas sobre eleições e política brasileira\n\n` +
+      `⚠️ ATENÇÃO: Esta classificação foi gerada por um modelo de Machine Learning e não substitui uma verificação humana. Utilize como apoio à análise crítica.`
     );
   };
 
@@ -150,7 +150,7 @@ function App() {
         id: nextId++,
         role: "assistant",
         content:
-          "Desculpe, ocorreu um erro ao verificar esta informacao. Tente novamente.",
+          "Desculpe, ocorreu um erro ao verificar esta informação. Tente novamente.",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -168,8 +168,8 @@ function App() {
             <EmptyState>
               <h2>Verificador de Fatos com IA</h2>
               <p>
-                Cole uma noticia, manchete ou alegacao e receba uma analise
-                baseada em fontes verificadas e inteligencia artificial.
+                Cole uma notícia, manchete ou alegação e receba uma análise
+                baseada em fontes verificadas e inteligência artificial.
               </p>
             </EmptyState>
           )}
