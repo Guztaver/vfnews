@@ -8,7 +8,7 @@
         "cd frontend/vfnews && npm run build",
         "mkdir -p backend/src/main/resources/static",
         "cp -r frontend/vfnews/dist/* backend/src/main/resources/static/",
-        "cd backend && mvn package -DskipTests"
+        "cd backend && ./mvnw package -DskipTests"
       ]
     }
   },
