@@ -48,7 +48,9 @@ public class FactCheckService {
         }
 
         Map<String, String> mlResult = mlService.predict(claimText);
-        if (mlResult != null) {
+        if (
+            mlResult != null && !"Inconclusivo".equals(mlResult.get("rating"))
+        ) {
             FactCheck saved = repository.save(
                 FactCheck.builder()
                     .claim(claimText)

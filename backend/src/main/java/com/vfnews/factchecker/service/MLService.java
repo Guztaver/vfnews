@@ -228,8 +228,13 @@ public class MLService {
     }
 
     public Map<String, String> predict(String claim) {
-        if (model == null || vocabulary == null) {
-            return null;
+        Map<String, String> result = new HashMap<>();
+        result.put("text", claim);
+        result.put("source", "ML");
+
+        if (model == null || vocabulary == null || labels == null) {
+            result.put("rating", "Inconclusivo");
+            return result;
         }
 
         SimpleTokenizer tokenizer = new SimpleTokenizer();
@@ -242,16 +247,12 @@ public class MLService {
         }
 
         int prediction = model.predict(features);
-
-        // Guard against invalid predictions (stale model / all-zero features)
         if (prediction < 0 || prediction >= labels.length) {
-            return null;
+            result.put("rating", "Inconclusivo");
+            return result;
         }
 
-        Map<String, String> result = new HashMap<>();
-        result.put("text", claim);
         result.put("rating", labels[prediction]);
-        result.put("source", "ML");
         return result;
     }
 
