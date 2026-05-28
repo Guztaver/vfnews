@@ -94,8 +94,9 @@ public class FactCheckService {
             if (matchedTokens.contains(t)) overlap++;
         }
 
+        if (overlap < 2 && queryTokens.size() >= 2) return false;
         double ratio = (double) overlap / queryTokens.size();
-        return ratio >= 0.3;
+        return ratio >= 0.5;
     }
 
     private Set<String> tokenize(String text) {
