@@ -107,6 +107,21 @@ public class DataSeeder implements CommandLineRunner {
                 "bolsonaro, eleição, lula"
             )
         );
+
+        entries.add(
+            e(
+                "Bolsonaro já foi preso em 1986 por envolvimento em atos de indisciplina militar quando era capitão do Exército.",
+                "true",
+                "bolsonaro, prisão, exército"
+            )
+        );
+        entries.add(
+            e(
+                "Bolsonaro foi expulso do Exército por ato terrorista.",
+                "false",
+                "bolsonaro, expulso, exército, terrorista"
+            )
+        );
         entries.add(
             e(
                 "As eleições de 2022 foram consideradas seguras e auditáveis pelo TSE e observadores internacionais.",
