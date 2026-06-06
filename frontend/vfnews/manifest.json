@@ -1,0 +1,11 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "vfnews",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "vfnews",
+  "start_url": "/https://vfnews.deploy2.gustavoanjos.com/",
+  "theme_color": "#0f172a"
+}
