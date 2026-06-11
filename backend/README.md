@@ -20,7 +20,6 @@ biblioteca Smile NLP para o modelo de Machine Learning e suporta SQLite
 - [Seeding do Dataset](#seeding-do-dataset)
 - [Modelo de Machine Learning](#modelo-de-machine-learning)
 - [Banco de Dados](#banco-de-dados)
-- [Integracao com FACTCK.BR](#integracao-com-factckbr)
 - [Empacotando o Frontend](#empacotando-o-frontend)
 - [Testes](#testes)
 
@@ -56,7 +55,7 @@ backend/
     |   |   |   +-- DataSeeder.java                (Runner de inicializacao)
     |   |   |   +-- DataSourceConfig.java          (Config de datasource)
     |   |   |   +-- DatasetSeederService.java      (Seeding via Google API)
-    |   |   |   +-- FACTCKBRImporterService.java   (Import do FACTCK.BR TSV)
+    |   |   |   +-- ConsolidadoImporterService.java (Import do dataset consolidado)
     |   |   +-- domain/
     |   |   |   +-- DatasetEntry.java              (Entidade JPA do dataset)
     |   |   |   +-- FactCheck.java                 (Entidade JPA de checagem)
@@ -80,7 +79,7 @@ backend/
     |   +-- resources/
     |       +-- application.yml
     |       +-- datasets/
-    |           +-- FACTCKBR.tsv
+    |           +-- dataset_consolidado.csv
     +-- test/
 ```
 
@@ -105,7 +104,7 @@ cd backend
 O servidor iniciara em `http://localhost:8080`. Na primeira execucao:
 
 1. O banco SQLite sera criado em `backend/../factchecker.sqlite3`.
-2. O `DataSeeder` executara o seeding do dataset (FACTCK.BR + Google API +
+2. O `DataSeeder` executara o seeding do dataset (VFNews Dataset + Google API +
    fallback).
 3. O modelo ML sera treinado automaticamente.
 
@@ -209,22 +208,22 @@ de treinamento.
 
 ```json
 {
-  "total": 1309,
+  "total": 20450,
   "byLabel": {
-    "false": 850,
-    "true": 120,
-    "mixed": 339
+    "false": 12000,
+    "true": 8450,
+    "mixed": 0
   },
   "byKeyword": {
-    "bolsonaro": 423,
-    "lula": 311,
-    "eleicao": 245,
+    "bolsonaro": 3200,
+    "lula": 2800,
+    "eleicao": 2100,
     ...
   },
   "byPublisher": {
-    "Aos Fatos": 702,
-    "Lupa": 420,
-    "Agencia Publica (Truco)": 187
+    "Fake.br Corpus": 7200,
+    "ISOT Dataset": 4500,
+    "Desconhecido": 8750
   },
   "latest": [ ... ]
 }
@@ -243,10 +242,11 @@ dados atuais do dataset.
 
 ```json
 {
-  "datasetSize": 1309,
-  "trainSize": 1047,
-  "testSize": 262,
-  "vocabularySize": 4712,
+  "modelName": "VFNews Dataset",
+  "datasetSize": 20450,
+  "trainSize": 16360,
+  "testSize": 4090,
+  "vocabularySize": 18500,
   "algorithm": "Multinomial Naive Bayes",
   "accuracy": 0.8923,
   "precision": {
@@ -295,14 +295,14 @@ alegacao encontrada.
 
 Quando o banco esta vazio, o `DataSeeder` executa tres etapas em ordem:
 
-### Etapa 1: FACTCK.BR (FACTCKBRImporterService)
+### Etapa 1: VFNews Dataset (ConsolidadoImporterService)
 
-Importa o arquivo TSV localizado em `src/main/resources/datasets/FACTCKBR.tsv`.
-O arquivo contem 1309 linhas com afirmacoes verificadas. A importacao:
+Importa o arquivo CSV `src/main/resources/datasets/dataset_consolidado.csv`,
+contendo afirmacoes verificadas em portugues de diversas fontes. A importacao:
 
-- Le o arquivo linha a linha.
-- Para cada linha, extrai `claimReviewed` (texto da alegacao), `alternativeName`
-  (rotulo), `Author` (URL da agencia) e demais campos.
+- Le o arquivo com um parser CSV state-machine (suporta campos com aspas e
+  quebras de linha).
+- Para cada linha, extrai `texto`, `label` e `fonte`.
 - Mapeia o rotulo para "true", "false" ou "mixed".
 - Extrai palavras-chave do texto.
 - Insere em lotes de 100 entradas, evitando duplicatas verificando o campo
@@ -395,38 +395,6 @@ que cria e atualiza as tabelas automaticamente com base nas entidades.
 
 ---
 
-## Integracao com FACTCK.BR
-
-O dataset FACTCK.BR esta incluido no classpath como um arquivo TSV em
-`src/main/resources/datasets/FACTCKBR.tsv`.
-
-### Servico de Importacao
-
-`FACTCKBRImporterService` e um bean Spring anotado com `@Service` que:
-
-1. Abre o arquivo do classpath.
-2. Ignora a linha de cabecalho.
-3. Para cada linha subsequente, parseia as colunas separadas por tabulacao.
-4. Mapeia os campos conforme a tabela abaixo.
-5. Verifica duplicatas em `DatasetEntryRepository.existsByText()`.
-6. Insere em lotes de 100.
-
-### Mapeamento de Rotulos
-
-Os rotulos textuais do dataset (coluna `alternativeName`) sao simplificados para
-o esquema de tres classes esperado pelo modelo:
-
-| Rotulo FACTCK.BR                       | Mapeamento |
-|----------------------------------------|------------|
-| `falso`, `false`                       | `false`    |
-| `verdadeiro`, `true`                   | `true`     |
-| `distorcido`, `exagerado`,             | `mixed`    |
-| `insustentavel`, `impreciso`,          |            |
-| `subestimado`, `discutivel`,           |            |
-| `impossivel provar`, `sem contexto`    |            |
-
----
-
 ## Empacotando o Frontend
 
 Em producao, o frontend compilado e copiado para `src/main/resources/static/`,
@@ -457,4 +425,3 @@ teste. Para executar:
 
 - Smile NLP: https://haifengl.github.io/smile/
 - Google Fact Check Tools API: https://developers.google.com/fact-check/tools/api
-- FACTCK.BR Dataset: https://github.com/jghm-f/FACTCK.BR

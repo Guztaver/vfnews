@@ -18,7 +18,6 @@ localmente via Naive Bayes Multinomial.
 - [Executando em Producao](#executando-em-producao)
 - [Variaveis de Ambiente](#variaveis-de-ambiente)
 - [Portas](#portas)
-- [Integracao com Dataset FACTCK.BR](#integracao-com-dataset-factckbr)
 - [API de Checagem](#api-de-checagem)
 - [Contribuindo](#contribuindo)
 - [Seguranca](#seguranca)
@@ -67,8 +66,8 @@ Cliente (Browser)
 
 O sistema executa tres etapas de seeding quando o banco de dados esta vazio:
 
-1. **FACTCK.BR dataset**: importa 1309 afirmacoes verificadas de tres agencias
-   brasileiras (Aos Fatos, Lupa, Truco).
+1. **VFNews Dataset**: importa afirmacoes verificadas em portugues de diversas
+   fontes (Fake.br Corpus, ISOT Dataset, entre outras).
 2. **Google Fact Check API**: consulta a API externa para obter checagens
    recentes sobre temas de politica brasileira.
 3. **Fallback**: se o total de entradas no banco for inferior a 100, entradas
@@ -117,7 +116,7 @@ vfnews/
 |   |   |   +-- resources/
 |   |   |       +-- application.yml
 |   |   |       +-- datasets/
-|   |   |           +-- FACTCKBR.tsv
+|   |   |           +-- dataset_consolidado.csv
 +-- frontend/
     +-- vfnews/
         +-- package.json
@@ -157,7 +156,7 @@ cd backend
 
 O backend iniciara na porta `8080`. Durante o primeiro startup, o banco de dados
 sera criado automaticamente (arquivo `factchecker.sqlite3` no diretorio raiz do
-projeto) e o dataset sera populado com as entradas do FACTCK.BR, da Google Fact
+projeto) e o dataset sera populado com as entradas do VFNews Dataset, da Google Fact
 Check API e do fallback embutido.
 
 ### Frontend
@@ -245,54 +244,6 @@ DATABASE_PASSWORD=<senha>
 Em desenvolvimento, o frontend roda em `localhost:5173` e faz requisicoes para
 `localhost:8080`. Em producao, o frontend e servido diretamente pelo Spring Boot
 como conteudo estatico, utilizando a mesma porta do backend.
-
----
-
-## Integracao com Dataset FACTCK.BR
-
-O dataset [FACTCK.BR](https://github.com/jghm-f/FACTCK.BR) e um corpus de 1309
-linhas contendo afirmacoes verificadas por agencias brasileiras de fact-checking.
-
-### Colunas do Dataset
-
-| Coluna            | Descricao                                    |
-|-------------------|----------------------------------------------|
-| URL               | URL do artigo de checagem                    |
-| Author            | URL da agencia de verificacao                |
-| datePublished     | Data de publicacao da checagem               |
-| claimReviewed     | Texto da alegacao verificada                 |
-| reviewBody        | Corpo do texto de verificacao                |
-| Title             | Titulo do artigo                             |
-| ratingValue       | Classificacao numerica (1-5)                 |
-| bestRating        | Tamanho da escala de classificacao           |
-| alternativeName   | Rotulo textual da classificacao              |
-
-### Mapeamento para DatasetEntry
-
-| DatasetEntry | Origem FACTCK.BR  | Descricao                                 |
-|-------------|-------------------|-------------------------------------------|
-| text        | claimReviewed     | Texto da alegacao (truncado em 500 chars) |
-| label       | alternativeName   | Mapeado para "true", "false" ou "mixed"   |
-| keywords    | texto completo    | Extraidas automaticamente do conteudo     |
-| publisher   | Author (URL)      | Nome amigavel da agencia                  |
-
-### Mapeamento de Rotulos
-
-| Rotulo original FACTCK.BR               | Rotulo final DatasetEntry |
-|-----------------------------------------|---------------------------|
-| falso, false, fake, mentira, engano     | false                     |
-| verdadeiro, true, real                  | true                      |
-| distorcido, exagerado, insustentavel,   | mixed                     |
-| impreciso, subestimado, discutivel,     |                           |
-| impossivel provar, sem contexto, etc.   |                           |
-
-### Referencia Academica
-
-```
-Nascimento et al., "FACTCK.BR: A Dataset for the Study of Fake News in
-Portuguese", WebMedia '19, October 29 - November 1, 2019, Rio de Janeiro,
-Brazil. DOI: 10.1145/3323503.3361698
-```
 
 ---
 

@@ -64,7 +64,7 @@ navegacao pelo historico:
 Exemplos:
 
 ```
-feat: importa dataset FACTCK.BR no startup do servidor
+feat: importa dataset VFNews no startup do servidor
 fix: corrige NPE quando publisher e nulo no retorno da API
 docs: atualiza README com variaveis de ambiente
 ```

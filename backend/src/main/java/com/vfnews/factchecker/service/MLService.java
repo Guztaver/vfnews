@@ -118,6 +118,7 @@ public class MLService {
         Map<String, Integer> labelMap
     ) {
         lastMetrics = new LinkedHashMap<>();
+        lastMetrics.put("modelName", "VFNews Dataset");
         lastMetrics.put("datasetSize", repository.count());
         lastMetrics.put("trainSize", (int) (repository.count() * 0.8));
         lastMetrics.put("testSize", testEntries.size());
