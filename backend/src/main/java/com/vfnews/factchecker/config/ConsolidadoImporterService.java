@@ -32,6 +32,9 @@ public class ConsolidadoImporterService {
 
     private static final String CSV_PATH = "datasets/dataset_consolidado.csv";
 
+    /** Cap CSV imports. Set to 0 to rely solely on the curated fallback dataset. */
+    private static final int MAX_CSV_IMPORT = 0;
+
     /**
      * Imports all entries from the consolidated CSV file.
      * Returns the number of new entries added.
@@ -87,11 +90,9 @@ public class ConsolidadoImporterService {
                 // Skip entries that look like CSV artifacts
                 if (texto.startsWith("Via:") && texto.length() < 60) continue;
 
-                // Skip publishers that are not actual claim-level fact-checking sources.
-                // Fake.br Corpus and ISOT Dataset classify entire news articles
-                // (fake/real news), NOT individual claims — using them for
-                // claim-level fact-checking corrupts the model.
-                if (isUntrustedPublisher(fonte)) continue;
+                // Skip Fake.br Corpus "falso" entries — they classify entire
+                // articles as fake news, not individual claims as false.
+                if (shouldSkipEntry(fonte, labelOrig)) continue;
 
                 // Truncate long texts for the dataset entry
                 String text = truncate(texto, 500);
@@ -119,6 +120,8 @@ public class ConsolidadoImporterService {
                     imported += batch.size();
                     batch.clear();
                 }
+
+                if (imported + batch.size() >= MAX_CSV_IMPORT) break;
             }
 
             // Flush remaining
@@ -238,28 +241,56 @@ public class ConsolidadoImporterService {
     }
 
     /**
-     * Publishers whose datasets classify entire articles (fake/real news)
-     * rather than individual claims — unsuitable for claim-level fact-checking.
+     * Publishers whose "falso"-labeled entries should be excluded because they
+     * classify entire articles (fake/real news), not individual claims.
+     * "Verdadeiro" entries from these sources are kept for vocabulary coverage.
      */
-    private static final Set<String> UNTRUSTED_PUBLISHERS = Set.of(
+    private static final Set<String> FAKE_NEWS_DATASET_PUBLISHERS = Set.of(
         "Fake.br Corpus",
-        "Fake.br-Corpus",
+        "Fake.br-Corpus"
+    );
+
+    /**
+     * Publishers whose datasets classify entire articles (fake/real news)
+     * in a way unsuitable for ANY claim-level training — exclude fully.
+     */
+    private static final Set<String> BLACKLISTED_PUBLISHERS = Set.of(
         "ISOT Dataset",
         "ISOT"
     );
 
-    private static boolean isUntrustedPublisher(String publisher) {
-        if (publisher == null) return false;
+    /**
+     * Returns true if the entry should be skipped. For Fake.br Corpus,
+     * only "falso"-labeled entries are skipped (they pollute the model by
+     * associating common political terms with "false"). "Verdadeiro" entries
+     * are kept for Portuguese vocabulary coverage.
+     */
+    private boolean shouldSkipEntry(String publisher, String label) {
+        if (publisher == null) return true;
         String cleaned = publisher.trim();
-        return UNTRUSTED_PUBLISHERS.contains(cleaned);
+
+        if (BLACKLISTED_PUBLISHERS.contains(cleaned)) return true;
+
+        if (FAKE_NEWS_DATASET_PUBLISHERS.contains(cleaned)) {
+            // Only skip "falso" entries — keep "verdadeiro" for vocabulary
+            String lower = label != null ? label.toLowerCase().trim() : "";
+            return lower.equals("falso") || lower.equals("false") ||
+                   lower.equals("fake") || lower.equals("mentira");
+        }
+
+        return false;
     }
 
     /**
-     * Returns true if a publisher is not suitable for claim-level training data.
-     * Used by external cleanup logic.
+     * Returns true if a publisher should be completely excluded.
+     * Used by external cleanup logic (DatasetSeederService).
+     * This only checks blacklisted publishers; label-aware filtering
+     * is done during CSV import via shouldSkipEntry().
      */
     public static boolean isUntrusted(String publisher) {
-        return isUntrustedPublisher(publisher);
+        if (publisher == null) return true;
+        String cleaned = publisher.trim();
+        return BLACKLISTED_PUBLISHERS.contains(cleaned);
     }
 
     /**

@@ -37,11 +37,13 @@ public class DatasetSeederService {
     private static final int MAX_PER_KEYWORD = 30;
 
     /**
-     * Removes dataset entries that came from non-trusted publishers or have
-     * no publisher set (old data from before this field existed).
-     * Also removes Fake.br Corpus and ISOT Dataset entries because those
-     * datasets classify entire articles (fake/real news), not individual
-     * claims — using them for claim-level fact-checking corrupts the model.
+     * Removes dataset entries unsuitable for claim-level fact-checking:
+     * - Entries with no publisher set
+     * - ISOT Dataset entries (classify articles, not claims)
+     * - Fake.br Corpus "false"-labeled entries (classify articles as fake news,
+     *   which pollutes the model by associating political terms with "false")
+     *
+     * Fake.br Corpus "true" entries are kept for Portuguese vocabulary coverage.
      */
     @Transactional
     public int cleanUntrustedEntries() {
@@ -50,11 +52,20 @@ public class DatasetSeederService {
 
         for (DatasetEntry entry : all) {
             String pub = entry.getPublisher();
+            String label = entry.getLabel();
+
             if (pub == null || pub.isBlank()) {
                 toDelete.add(entry.getId());
             } else if (
                 ConsolidadoImporterService.isUntrusted(pub)
             ) {
+                // ISOT Dataset — remove entirely
+                toDelete.add(entry.getId());
+            } else if (
+                "false".equals(label) &&
+                (pub.contains("Fake.br") || pub.equals("Fake.br Corpus") || pub.equals("Fake.br-Corpus"))
+            ) {
+                // Fake.br Corpus "false" entries — remove
                 toDelete.add(entry.getId());
             }
         }
@@ -62,7 +73,7 @@ public class DatasetSeederService {
         if (!toDelete.isEmpty()) {
             repository.deleteAllById(toDelete);
             log.info(
-                "Removed {} untrusted dataset entries (no publisher info or unsuitable source) — will re-seed from trusted sources",
+                "Removed {} unsuitable dataset entries — will re-seed from trusted sources",
                 toDelete.size()
             );
         }

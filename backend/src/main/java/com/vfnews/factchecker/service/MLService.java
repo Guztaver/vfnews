@@ -99,10 +99,13 @@ public class MLService {
             yTrain[i] = labelMap.get(trainLabels.get(i));
         }
 
-        // Train Discrete Naive Bayes (Multinomial)
+        // Train Discrete Naive Bayes (Multinomial) with uniform priors
+        // to avoid class imbalance bias (dataset has many more true than false).
+        double[] priors = new double[labels.length];
+        Arrays.fill(priors, 1.0 / labels.length);
         model = new DiscreteNaiveBayes(
             DiscreteNaiveBayes.Model.MULTINOMIAL,
-            labels.length,
+            priors,
             vocabulary.size()
         );
         model.update(xTrain, yTrain);
