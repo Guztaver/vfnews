@@ -39,19 +39,27 @@ public class DataSeeder implements CommandLineRunner {
             // 2. Supplement with Google Fact Check API data
             List<DatasetEntry> apiEntries = datasetSeederService.seedFromApi();
             log.info("API returned {} entries.", apiEntries.size());
-
-            // 3. Add fallback entries only if still under threshold
-            if (repository.count() < 100) {
-                log.info("Low dataset count — adding fallback dataset.");
-                repository.saveAll(buildFallbackDataset());
-            }
-
-            log.info("Dataset seeded: {} entries total.", repository.count());
         } else {
             log.info(
-                "Dataset already has {} entries — skipping seed.",
+                "Dataset already has {} entries — skipping CSV/API seed.",
                 repository.count()
             );
+        }
+
+        // 3. Always supplement with balanced fallback dataset of curated
+        //    true/false claims about Brazilian politics (deduplicated).
+        //    This runs on every startup to ensure the model has quality
+        //    balanced training data regardless of CSV/API content.
+        List<DatasetEntry> fallback = buildFallbackDataset();
+        List<DatasetEntry> newFallback = new ArrayList<>();
+        for (DatasetEntry e : fallback) {
+            if (!repository.existsByText(e.getText())) {
+                newFallback.add(e);
+            }
+        }
+        if (!newFallback.isEmpty()) {
+            repository.saveAll(newFallback);
+            log.info("Added {} balanced fallback entries.", newFallback.size());
         }
 
         log.info("Training ML model...");

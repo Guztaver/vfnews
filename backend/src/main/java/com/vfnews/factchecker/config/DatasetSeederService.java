@@ -39,6 +39,9 @@ public class DatasetSeederService {
     /**
      * Removes dataset entries that came from non-trusted publishers or have
      * no publisher set (old data from before this field existed).
+     * Also removes Fake.br Corpus and ISOT Dataset entries because those
+     * datasets classify entire articles (fake/real news), not individual
+     * claims — using them for claim-level fact-checking corrupts the model.
      */
     @Transactional
     public int cleanUntrustedEntries() {
@@ -48,8 +51,10 @@ public class DatasetSeederService {
         for (DatasetEntry entry : all) {
             String pub = entry.getPublisher();
             if (pub == null || pub.isBlank()) {
-                // Old entries without publisher info — safe to remove,
-                // they will be re-seeded from trusted sources.
+                toDelete.add(entry.getId());
+            } else if (
+                ConsolidadoImporterService.isUntrusted(pub)
+            ) {
                 toDelete.add(entry.getId());
             }
         }
@@ -57,7 +62,7 @@ public class DatasetSeederService {
         if (!toDelete.isEmpty()) {
             repository.deleteAllById(toDelete);
             log.info(
-                "Removed {} old dataset entries (no publisher info) — will re-seed from trusted sources",
+                "Removed {} untrusted dataset entries (no publisher info or unsuitable source) — will re-seed from trusted sources",
                 toDelete.size()
             );
         }

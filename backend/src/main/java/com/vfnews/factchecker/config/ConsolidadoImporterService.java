@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -85,6 +86,12 @@ public class ConsolidadoImporterService {
                 if (texto == null || texto.isBlank()) continue;
                 // Skip entries that look like CSV artifacts
                 if (texto.startsWith("Via:") && texto.length() < 60) continue;
+
+                // Skip publishers that are not actual claim-level fact-checking sources.
+                // Fake.br Corpus and ISOT Dataset classify entire news articles
+                // (fake/real news), NOT individual claims — using them for
+                // claim-level fact-checking corrupts the model.
+                if (isUntrustedPublisher(fonte)) continue;
 
                 // Truncate long texts for the dataset entry
                 String text = truncate(texto, 500);
@@ -209,25 +216,50 @@ public class ConsolidadoImporterService {
         String lower = label.toLowerCase().trim();
 
         if (
-            lower.equals("falso") ||
-            lower.equals("false") ||
-            lower.equals("fake") ||
-            lower.equals("mentira")
+            lower.contains("falso") ||
+            lower.contains("false") ||
+            lower.contains("fake") ||
+            lower.contains("mentira") ||
+            lower.contains("engano")
         ) {
             return "false";
         }
 
         if (
-            lower.equals("verdadeiro") ||
-            lower.equals("true") ||
-            lower.equals("real")
+            lower.contains("verdade") ||
+            lower.contains("true") ||
+            lower.contains("real")
         ) {
             return "true";
         }
 
-        // Default for this dataset: treat anything unexpected as true
-        // (most entries are labeled "verdadeiro")
+        // Default: treat as "true" only if it looks like a real-news label
         return "true";
+    }
+
+    /**
+     * Publishers whose datasets classify entire articles (fake/real news)
+     * rather than individual claims — unsuitable for claim-level fact-checking.
+     */
+    private static final Set<String> UNTRUSTED_PUBLISHERS = Set.of(
+        "Fake.br Corpus",
+        "Fake.br-Corpus",
+        "ISOT Dataset",
+        "ISOT"
+    );
+
+    private static boolean isUntrustedPublisher(String publisher) {
+        if (publisher == null) return false;
+        String cleaned = publisher.trim();
+        return UNTRUSTED_PUBLISHERS.contains(cleaned);
+    }
+
+    /**
+     * Returns true if a publisher is not suitable for claim-level training data.
+     * Used by external cleanup logic.
+     */
+    public static boolean isUntrusted(String publisher) {
+        return isUntrustedPublisher(publisher);
     }
 
     /**
