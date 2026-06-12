@@ -2,19 +2,21 @@ package com.vfnews.factchecker.config;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-/**
- * Converts Coolify's postgres://DATABASE_URL to JDBC format.
- * Coolify provides DATABASE_URL=postgres://user:pass@host:port/db
- * but JDBC requires jdbc:postgresql://host:port/db
- */
 @Configuration
 public class DataSourceConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
 
     @Value("${DATABASE_URL:jdbc:sqlite:db.sqlite3}")
     private String databaseUrl;
@@ -47,6 +49,10 @@ public class DataSourceConfig {
             driver = "org.postgresql.Driver";
         }
 
+        if (url.startsWith("jdbc:sqlite:")) {
+            ensureValidSqliteFile(url);
+        }
+
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(url);
         config.setDriverClassName(driver);
@@ -55,5 +61,32 @@ public class DataSourceConfig {
         config.setMaximumPoolSize(5);
 
         return new HikariDataSource(config);
+    }
+
+    private void ensureValidSqliteFile(String url) {
+        String path = url.substring("jdbc:sqlite:".length());
+        File dbFile = new File(path);
+        File parentDir = dbFile.getAbsoluteFile().getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+
+        if (!dbFile.exists()) {
+            log.info("SQLite database file does not exist, will be created: {}", dbFile.getAbsolutePath());
+            return;
+        }
+
+        if (dbFile.length() == 0) {
+            log.warn("SQLite database file is empty (0 bytes), deleting to allow recreation: {}", dbFile.getAbsolutePath());
+            dbFile.delete();
+            return;
+        }
+
+        try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
+            c.createStatement().execute("SELECT 1");
+        } catch (Exception e) {
+            log.warn("SQLite database file is corrupted, deleting to allow recreation: {} — {}", dbFile.getAbsolutePath(), e.getMessage());
+            dbFile.delete();
+        }
     }
 }
