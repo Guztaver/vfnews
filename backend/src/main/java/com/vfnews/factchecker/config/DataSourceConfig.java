@@ -18,7 +18,7 @@ public class DataSourceConfig {
 
     private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
 
-    @Value("${DATABASE_URL:jdbc:sqlite:db.sqlite3}")
+    @Value("${DATABASE_URL:jdbc:sqlite:data/db.sqlite3}")
     private String databaseUrl;
 
     @Value("${DATABASE_DRIVER:org.sqlite.JDBC}")
