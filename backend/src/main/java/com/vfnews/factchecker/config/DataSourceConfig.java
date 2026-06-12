@@ -49,10 +49,6 @@ public class DataSourceConfig {
             driver = "org.postgresql.Driver";
         }
 
-        if (url.startsWith("jdbc:sqlite:")) {
-            ensureValidSqliteFile(url);
-        }
-
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(url);
         config.setDriverClassName(driver);
@@ -63,7 +59,8 @@ public class DataSourceConfig {
         return new HikariDataSource(config);
     }
 
-    private void ensureValidSqliteFile(String url) {
+    public static void ensureValidSqliteFile(String url) {
+        if (!url.startsWith("jdbc:sqlite:")) return;
         String path = url.substring("jdbc:sqlite:".length());
         File dbFile = new File(path);
         File parentDir = dbFile.getAbsoluteFile().getParentFile();
@@ -71,22 +68,36 @@ public class DataSourceConfig {
             parentDir.mkdirs();
         }
 
-        if (!dbFile.exists()) {
-            log.info("SQLite database file does not exist, will be created: {}", dbFile.getAbsolutePath());
-            return;
+        boolean needsRecreate = false;
+        if (dbFile.exists()) {
+            if (dbFile.length() == 0) {
+                needsRecreate = true;
+            } else {
+                try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
+                    c.createStatement().execute("SELECT 1");
+                } catch (Exception e) {
+                    needsRecreate = true;
+                }
+            }
         }
 
-        if (dbFile.length() == 0) {
-            log.warn("SQLite database file is empty (0 bytes), deleting to allow recreation: {}", dbFile.getAbsolutePath());
-            dbFile.delete();
-            return;
+        if (needsRecreate) {
+            boolean deleted = dbFile.delete();
+            if (!deleted) {
+                log.error("Failed to delete corrupted database file: {}", dbFile.getAbsolutePath());
+                throw new RuntimeException("Cannot delete corrupted SQLite database: " + dbFile.getAbsolutePath());
+            }
         }
 
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
-            c.createStatement().execute("SELECT 1");
-        } catch (Exception e) {
-            log.warn("SQLite database file is corrupted, deleting to allow recreation: {} — {}", dbFile.getAbsolutePath(), e.getMessage());
-            dbFile.delete();
+        if (!dbFile.exists() || needsRecreate) {
+            try (Connection c = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
+                c.createStatement().execute("CREATE TABLE IF NOT EXISTS _db_init_check (id INTEGER PRIMARY KEY)");
+            } catch (Exception e) {
+                log.error("Failed to initialize SQLite database: {}", dbFile.getAbsolutePath(), e);
+                throw new RuntimeException("Cannot initialize SQLite database: " + dbFile.getAbsolutePath(), e);
+            }
+            log.info("SQLite database initialized: {}", dbFile.getAbsolutePath());
         }
     }
+
 }
